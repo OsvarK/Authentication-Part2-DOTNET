@@ -3,4 +3,7 @@
 View the React frontend part [here!](https://github.com/OsvarK/AuthProject-Part1-React)
 
 Notes to self:
-- Update frontendt to handle the get userinformation, userID.
+- Update frontend to handle the get userinformation, userID.
+
+Notes to Reader:
+- all the sensitive data in this repo, does never correlate with the live version. Of Course.
