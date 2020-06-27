@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http;
 
 using AuthenticationAPI.Security;
 using AuthenticationAPI.Models;
-using Microsoft.AspNetCore.Http;
 using AuthenticationAPI.Logic;
 
 namespace AuthenticationAPI.Controllers
@@ -22,6 +22,7 @@ namespace AuthenticationAPI.Controllers
         InputValidations inputValidations = new InputValidations();
         Auth_Actions authAction = new Auth_Actions();
         AuthToken authToken = new AuthToken();
+        Hash hash = new Hash();
 
         // Disable the ability to create an account.
         private bool _DisableSignup = false;
@@ -31,25 +32,27 @@ namespace AuthenticationAPI.Controllers
             // Get Token from Cookies
             string key = "token";
             var value = Request.Cookies[key];
-       
+
             // return list of claims | if claims is null, user is not auth.
             return authToken.Authorization(value);
         }
 
         // POST: api/auth/createuser ----------------------------------------------------------------------
         // Require user data, creates user.
-        [HttpPost("createuser")]
+        [HttpPost("signup")]
         public IActionResult CreateNewUser([FromBody] Auth_UserModel user)
         {
-            
+            Console.WriteLine("api/auth/signup");
+            user.Password = hash.HashPassword(user.Password);
 
             // Make it posible to disable this post request!
             if (_DisableSignup)
                 return StatusCode(405, "Creating accounts have been disabled.");
 
             // Validate user inputed data
-            if (!inputValidations.Auth_UserModelValidationSignup(user))
-                return StatusCode(405, "Data was not inputed correctly.");
+            Tuple<bool, string> validation = inputValidations.Auth_UserModelValidationSignup(user);
+            if (!validation.Item1)
+                return StatusCode(405, validation.Item2);
 
             // Check if user already exist
             if (authAction.DoesUserExist(user.Username, user.Email))
@@ -57,7 +60,42 @@ namespace AuthenticationAPI.Controllers
 
             // Create new user, and return there auth token
             authAction.CreateNewUser(user);
-            return Ok(user.getAuthToken());
+
+            return Ok("Successfully created your account!");
+        }
+
+        // POST: api/auth/edituser
+        // Require user data, changes user data
+        [HttpPost("edituser")]
+        public IActionResult EditUser([FromBody] Auth_UserModel user)
+        {
+            Console.WriteLine("api/auth/edituser");
+            user.ValidatedPassword = hash.HashPassword(user.ValidatedPassword);
+
+            // Check for Authentication claims
+            var authentication = Authenticate();
+            if (authentication == null)
+                return StatusCode(405, "Authorization token is not valid.");
+
+            if(user.ValidatedPassword == null || !authAction.PasswordMatch(authentication[0], user.ValidatedPassword)) // authentication[0] username
+                return StatusCode(405, "Validation failed, password incorrect.");
+
+            if (authAction.DoesUserExist(user.Username, user.Email))
+                return StatusCode(405, "Username or Email already exist.");
+
+            // updates and returns the new user information.
+            user = authAction.EditUser(user, authentication);
+
+            // Reset cookie
+            Response.Cookies.Delete("token");
+            string token = authToken.GenerateAuthToken(user);
+            string key = "token";
+            string value = token;
+            CookieOptions cookieOptions = new CookieOptions();
+            cookieOptions.Expires = DateTime.Now.AddDays(7);
+            Response.Cookies.Append(key, value, cookieOptions);
+
+            return Ok();           
         }
 
         // GET: api/auth/auth ----------------------------------------------------------------------
@@ -65,10 +103,15 @@ namespace AuthenticationAPI.Controllers
         [HttpGet("auth")]
         public IActionResult Auth()
         {
+            Console.WriteLine("api/auth/auth");
+
             // Check for Authentication claims
             var authentication = Authenticate();
             if (authentication == null)
                 return StatusCode(405, "Authorization token is not valid.");
+
+            if (!authAction.PasswordMatch(authentication[0], authentication[1]))
+                return StatusCode(405, "Incorrect password.");
 
             // Token is valid, returing there data.
             return Ok(authAction.GetUsersData(authentication));
@@ -81,6 +124,8 @@ namespace AuthenticationAPI.Controllers
         [HttpGet("logout")]
         public IActionResult logout()
         {
+            Console.WriteLine("api/auth/logout");
+
             // Check for Authentication claims
             var authentication = Authenticate();
             if (authentication == null)
@@ -95,11 +140,15 @@ namespace AuthenticationAPI.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] Auth_UserModel user)
         {
-            // Validate user inputed data
-            if (!inputValidations.Auth_UserModelValidationLogin(user))
-                return StatusCode(405, "Data was not inputed correctly.");
+            Console.WriteLine("api/auth/login");
+            user.Password = hash.HashPassword(user.Password);
 
-            if (!authAction.PasswordMatch(user))
+            // Validate user inputed data
+            Tuple<bool, string> validation = inputValidations.Auth_UserModelValidationLogin(user);
+            if (!validation.Item1)
+                return StatusCode(405, validation.Item2);
+
+            if (!authAction.PasswordMatch(user.Username, user.Password))
                 return StatusCode(405, "Incorrect password.");
             else
             {
@@ -120,6 +169,7 @@ namespace AuthenticationAPI.Controllers
         [HttpGet("isadmin")]
         public IActionResult admin()
         {
+            Console.WriteLine("api/auth/isadmin");
             // Check for Authentication claims
             var authentication = Authenticate();
             if (authentication == null)

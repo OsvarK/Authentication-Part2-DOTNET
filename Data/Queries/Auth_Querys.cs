@@ -35,7 +35,7 @@ namespace CrudBackend.Data.Queries
         // Returns users data Username, Email, FirstName, LastName
         public List<string> GetUsersData(string username, string password)
         {
-            string queryString = "SELECT Username, Email, FirstName, LastName FROM Users WHERE Username=@Username AND Password=@Password";
+            string queryString = "SELECT * FROM Users WHERE Username=@Username AND Password=@Password";
             DataContext dataContext = new DataContext();
             MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
 
@@ -48,17 +48,18 @@ namespace CrudBackend.Data.Queries
             cmd.Parameters.Add(new MySqlParameter("@Username", username));
             cmd.Parameters.Add(new MySqlParameter("@Password", password));
 
-            Auth_UserModel user = new Auth_UserModel();
             List<string> returnData = new List<string>();
 
             using (MySqlDataReader reader = cmd.ExecuteReader())
             {
+
+                int hej = reader.FieldCount;
                 if (reader.Read())
                 {
-                    returnData.Add(RemoveSpacesInString(reader[0].ToString()));
-                    returnData.Add(RemoveSpacesInString(reader[1].ToString()));
-                    returnData.Add(RemoveSpacesInString(reader[2].ToString()));
-                    returnData.Add(RemoveSpacesInString(reader[3].ToString()));
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        returnData.Add(RemoveSpacesInString(reader[i].ToString()));
+                    }
                 }
             }
 
@@ -146,9 +147,30 @@ namespace CrudBackend.Data.Queries
 
             connection.Close();
             return isAdmin;
-
         }
 
+        // Update User information
+        public void EditUser(Auth_UserModel user, int userID) {
+            string queryString = "UPDATE Users SET Username=@Username, Email=@Email, Firstname=@Firstname, Lastname=@Lastname, Password=@Password WHERE UserID=@UserID";
+            DataContext dataContext = new DataContext();
+            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = connection;
+            cmd.CommandText = queryString;
+
+            connection.Open();
+
+            cmd.Parameters.Add(new MySqlParameter("@UserID", userID));
+            cmd.Parameters.Add(new MySqlParameter("@Username", user.Username));
+            cmd.Parameters.Add(new MySqlParameter("@Email", user.Email));
+            cmd.Parameters.Add(new MySqlParameter("@Firstname", user.Firstname));
+            cmd.Parameters.Add(new MySqlParameter("@Lastname", user.Lastname));
+            cmd.Parameters.Add(new MySqlParameter("@Password", user.Password));
+
+            cmd.ExecuteScalar();
+            connection.Close();
+        }
 
         // SQL creates spaces to fill all the varachars, remove them.
         string RemoveSpacesInString(string str)
