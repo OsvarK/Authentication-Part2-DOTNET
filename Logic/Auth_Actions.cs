@@ -52,7 +52,7 @@ namespace AuthenticationAPI.Logic
             if (newAuth_UserModel.Password == null)
                 newAuth_UserModel.Password = beforeUpdateUserData[5];
             else
-                newAuth_UserModel.Password = new Hash().HashPassword(newAuth_UserModel.Password);
+                newAuth_UserModel.Password = Hash.HashPassword(newAuth_UserModel.Password);
 
             // beforeUpdateUserData[0] == UserID
             authQuery.EditUser(newAuth_UserModel, int.Parse(beforeUpdateUserData[0]));

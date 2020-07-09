@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
-using AuthenticationAPI.Data.Context;
 using AuthenticationAPI.Models;
+using AuthenticationAPI.Security;
 
 namespace CrudBackend.Data.Queries
 {
@@ -12,8 +12,7 @@ namespace CrudBackend.Data.Queries
         public void CreateNewUser(Auth_UserModel user)
         {
             string queryString = "INSERT INTO Users (Username, Email, FirstName, LastName, Password, Admin) VALUES (@Username, @Email, @FirstName, @LastName, @Password, @Admin)";
-            DataContext dataContext = new DataContext();
-            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = connection;
@@ -36,8 +35,7 @@ namespace CrudBackend.Data.Queries
         public List<string> GetUsersData(string username, string password)
         {
             string queryString = "SELECT * FROM Users WHERE Username=@Username AND Password=@Password";
-            DataContext dataContext = new DataContext();
-            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = connection;
@@ -71,8 +69,7 @@ namespace CrudBackend.Data.Queries
         public bool DoesUserExist(string username, string email)
         {
             string queryString = "SELECT Username, Email FROM Users WHERE Username=@Username OR Email=@Email";
-            DataContext dataContext = new DataContext();
-            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = connection;
@@ -94,8 +91,7 @@ namespace CrudBackend.Data.Queries
         public string GetPassword(string username)
         {
             string queryString = "SELECT Password FROM Users WHERE Username=@Username";
-            DataContext dataContext = new DataContext();
-            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = connection;
@@ -124,8 +120,7 @@ namespace CrudBackend.Data.Queries
         public bool CheckIsUserisAdmin(string username)
         {
             string queryString = "SELECT Admin FROM Users WHERE Username=@Username";
-            DataContext dataContext = new DataContext();
-            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = connection;
@@ -152,8 +147,7 @@ namespace CrudBackend.Data.Queries
         // Update User information
         public void EditUser(Auth_UserModel user, int userID) {
             string queryString = "UPDATE Users SET Username=@Username, Email=@Email, Firstname=@Firstname, Lastname=@Lastname, Password=@Password WHERE UserID=@UserID";
-            DataContext dataContext = new DataContext();
-            MySqlConnection connection = new MySqlConnection(dataContext.GetConnectionString());
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = connection;

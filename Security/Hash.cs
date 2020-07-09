@@ -8,23 +8,12 @@ using System.Threading.Tasks;
 
 namespace AuthenticationAPI.Security
 {
-    public class Hash
+    public static class Hash
     {
-
-        private readonly IConfiguration _configuration;
-        private string _secretsalt;
-
-        public Hash()
-        {
-            _configuration = new ConfigContex().configuration;
-            _secretsalt = _configuration["Security:Salt"];
-        }
-
-
-        public string HashPassword(string unHashedPassword)
+        public static string HashPassword(string unHashedPassword)
         {
             // Salt
-            byte[] salt = Encoding.ASCII.GetBytes(_secretsalt);
+            byte[] salt = Encoding.ASCII.GetBytes(ConfigContex.GetSalt());
 
             // Hash password
             var pbkdf2 = new Rfc2898DeriveBytes(unHashedPassword, salt, 10000);

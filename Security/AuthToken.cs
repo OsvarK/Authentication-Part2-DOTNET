@@ -10,24 +10,18 @@ using Newtonsoft.Json.Linq;
 using AuthenticationAPI.Models;
 using System.Security.Principal;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace AuthenticationAPI.Security
 {
-    public class AuthToken
+    public static class AuthToken
     {
-
-        private readonly IConfiguration _configuration;
-        private string _secretKey;
-
-        public AuthToken()
+        public static string GenerateAuthToken(Auth_UserModel user)
         {
-            _configuration = new ConfigContex().configuration;
-            _secretKey = _configuration["Security:JwtKey"];
-        }
 
-        public string GenerateAuthToken(Auth_UserModel user)
-        {
-            var SymmetricSecurityLey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+            string jwtKey = ConfigContex.GetJwtKey();
+
+            var SymmetricSecurityLey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             // Signing Credentials
             var signingCredentials = new SigningCredentials(SymmetricSecurityLey, SecurityAlgorithms.HmacSha256);
 
@@ -40,8 +34,8 @@ namespace AuthenticationAPI.Security
 
             // Create Token
             var token = new JwtSecurityToken(
-                issuer: _configuration["Security:JwtIssuer"],
-                audience: _configuration["Security:JwtAudience"],
+                issuer: ConfigContex.GetJwtIssuer(),
+                audience: ConfigContex.GetJwtAudience(),
                 claims,
                 expires: DateTime.Now.AddDays(7),
                 signingCredentials: signingCredentials
@@ -53,7 +47,7 @@ namespace AuthenticationAPI.Security
         }
 
         // Check if jwt is valid and if valid return list of claims (payload)
-        public List<string> ReadToken(string jwtInput)
+        public static List<string> ReadToken(string jwtInput)
         {
             try
             {
@@ -85,20 +79,20 @@ namespace AuthenticationAPI.Security
         }
 
         // Returns validation parameter settings
-        private TokenValidationParameters GetValidationParameters()
+        private static TokenValidationParameters GetValidationParameters()
         {
             return new TokenValidationParameters()
             {
                 ValidateLifetime = true,
-                ValidIssuer = _configuration["Security:JwtIssuer"],
-                ValidAudience = _configuration["Security:JwtAudience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey))
+                ValidIssuer = ConfigContex.GetJwtIssuer(),
+                ValidAudience = ConfigContex.GetJwtIssuer(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigContex.GetJwtKey()))
             };
         }
 
         // Authorization
         // returns claims. if return null user is not authorized.
-        public List<string> Authorization(string token)
+        public static List<string> Authorization(string token)
         {
             // Check if Cookie exist and read token
             List<string> tokenClaims;
@@ -110,7 +104,6 @@ namespace AuthenticationAPI.Security
             {
                 tokenClaims = null;
             }
-
             return tokenClaims;
         }
     }

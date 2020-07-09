@@ -21,11 +21,18 @@ namespace AuthenticationAPI.Controllers
         // Instantiate 
         InputValidations inputValidations = new InputValidations();
         Auth_Actions authAction = new Auth_Actions();
-        AuthToken authToken = new AuthToken();
-        Hash hash = new Hash();
+
 
         // Disable the ability to create an account.
-        private bool _DisableSignup = false;
+        private bool _DisableSignup;
+
+        public AuthController()
+        {
+            // check if we allow users to be able to signup. refers to appsetings.json 
+            _DisableSignup = ConfigContex.UserRegisteringDsabled();
+
+
+        }
 
         List<string> Authenticate()
         {
@@ -34,7 +41,7 @@ namespace AuthenticationAPI.Controllers
             var value = Request.Cookies[key];
 
             // return list of claims | if claims is null, user is not auth.
-            return authToken.Authorization(value);
+            return AuthToken.Authorization(value);
         }
 
         // POST: api/auth/createuser ----------------------------------------------------------------------
@@ -43,8 +50,7 @@ namespace AuthenticationAPI.Controllers
         public IActionResult CreateNewUser([FromBody] Auth_UserModel user)
         {
             Console.WriteLine("api/auth/signup");
-            user.Password = hash.HashPassword(user.Password);
-
+            
             // Make it posible to disable this post request!
             if (_DisableSignup)
                 return StatusCode(405, "Creating accounts have been disabled.");
@@ -54,12 +60,23 @@ namespace AuthenticationAPI.Controllers
             if (!validation.Item1)
                 return StatusCode(405, validation.Item2);
 
+            user.Password = Hash.HashPassword(user.Password);
+
             // Check if user already exist
             if (authAction.DoesUserExist(user.Username, user.Email))
                 return StatusCode(405, "Username or Email already exist.");
 
             // Create new user, and return there auth token
             authAction.CreateNewUser(user);
+
+            // Reset cookie "Login user in signup"
+            Response.Cookies.Delete("token");
+            string token = AuthToken.GenerateAuthToken(user);
+            string key = "token";
+            string value = token;
+            CookieOptions cookieOptions = new CookieOptions();
+            cookieOptions.Expires = DateTime.Now.AddDays(7);
+            Response.Cookies.Append(key, value, cookieOptions);
 
             return Ok("Successfully created your account!");
         }
@@ -70,7 +87,7 @@ namespace AuthenticationAPI.Controllers
         public IActionResult EditUser([FromBody] Auth_UserModel user)
         {
             Console.WriteLine("api/auth/edituser");
-            user.ValidatedPassword = hash.HashPassword(user.ValidatedPassword);
+            
 
             // Check for Authentication claims
             var authentication = Authenticate();
@@ -79,6 +96,8 @@ namespace AuthenticationAPI.Controllers
 
             if(user.ValidatedPassword == null || !authAction.PasswordMatch(authentication[0], user.ValidatedPassword)) // authentication[0] username
                 return StatusCode(405, "Validation failed, password incorrect.");
+            user.ValidatedPassword = Hash.HashPassword(user.ValidatedPassword);
+
 
             if (authAction.DoesUserExist(user.Username, user.Email))
                 return StatusCode(405, "Username or Email already exist.");
@@ -88,7 +107,7 @@ namespace AuthenticationAPI.Controllers
 
             // Reset cookie
             Response.Cookies.Delete("token");
-            string token = authToken.GenerateAuthToken(user);
+            string token = AuthToken.GenerateAuthToken(user);
             string key = "token";
             string value = token;
             CookieOptions cookieOptions = new CookieOptions();
@@ -141,19 +160,20 @@ namespace AuthenticationAPI.Controllers
         public IActionResult Login([FromBody] Auth_UserModel user)
         {
             Console.WriteLine("api/auth/login");
-            user.Password = hash.HashPassword(user.Password);
 
             // Validate user inputed data
             Tuple<bool, string> validation = inputValidations.Auth_UserModelValidationLogin(user);
             if (!validation.Item1)
                 return StatusCode(405, validation.Item2);
 
+            user.Password = Hash.HashPassword(user.Password);
+
             if (!authAction.PasswordMatch(user.Username, user.Password))
                 return StatusCode(405, "Incorrect password.");
             else
             {
                 // Create token
-                string token = authToken.GenerateAuthToken(user);
+                string token = AuthToken.GenerateAuthToken(user);
                 // Set Cookie
                 string key = "token";
                 string value = token;
