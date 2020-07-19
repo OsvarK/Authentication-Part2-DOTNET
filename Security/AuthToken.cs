@@ -28,8 +28,8 @@ namespace AuthenticationAPI.Security
             // Claims
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim(JwtRegisteredClaimNames.CHash, user.Password)
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
+                new Claim(JwtRegisteredClaimNames.CHash, user.Username),
             };
 
             // Create Token

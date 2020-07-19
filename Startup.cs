@@ -30,7 +30,6 @@ namespace AuthenticationAPI
                                                  .AllowAnyMethod();
                 });
             });
-
             services.AddControllers();
         }
 

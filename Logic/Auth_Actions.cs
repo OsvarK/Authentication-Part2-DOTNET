@@ -18,17 +18,19 @@ namespace AuthenticationAPI.Logic
             return authQuery.CheckIsUserisAdmin(username);
         }
 
-        public void CreateNewUser(Auth_UserModel user)
-        {         
+        public int CreateNewUser(Auth_RegisterModel newUser)
+        {
+            Auth_UserModel user = new Auth_UserModel();
+            user.RegisterModelToSqlModel(newUser);
             // Database interaction
-            authQuery.CreateNewUser(user);
+            return authQuery.CreateNewUser(user);
         }
 
-        public List<string> GetUsersData(List<string> claims)
+        public Auth_UserModel GetUsersData(List<string> claims)
         {
             // Database interaction
-            // Claims[0] = Username, claims[1] = password
-            return authQuery.GetUsersData(claims[0], claims[1]); 
+            // Claims[0] = UserID, claims[1] = username
+            return authQuery.GetUsersData(claims[0], claims[1]);
         }
 
         public bool DoesUserExist(string username, string email)
@@ -37,35 +39,41 @@ namespace AuthenticationAPI.Logic
             return authQuery.DoesUserExist(username, email);
         }
 
-        public Auth_UserModel EditUser(Auth_UserModel newAuth_UserModel, List<string> claims){
-            List<string> beforeUpdateUserData = GetUsersData(claims);
+        public Auth_UserModel EditUser(Auth_EditProfileModel editUser, List<string> claims){
 
-            // Determine witch values that have been changed
-            if(newAuth_UserModel.Username == null)
-                newAuth_UserModel.Username = beforeUpdateUserData[1];
-            if(newAuth_UserModel.Firstname == null)
-                newAuth_UserModel.Firstname = beforeUpdateUserData[2];
-            if(newAuth_UserModel.Lastname == null)
-                newAuth_UserModel.Lastname = beforeUpdateUserData[3];
-            if(newAuth_UserModel.Email == null)
-                newAuth_UserModel.Email = beforeUpdateUserData[4];
-            if (newAuth_UserModel.Password == null)
-                newAuth_UserModel.Password = beforeUpdateUserData[5];
+            Auth_UserModel beforeUpdateUserData = authQuery.GetUsersData(claims[0], claims[1]);
+            Auth_UserModel user = new Auth_UserModel();
+            user.EditModelToSqlModel(editUser);
+
+            // this fields are not allwed to be changed here.   
+            user.UserID = beforeUpdateUserData.UserID;
+            user.GoogleSubjectID = beforeUpdateUserData.GoogleSubjectID;
+            user.IsAdmin = beforeUpdateUserData.IsAdmin;
+
+            // if they fields are empty, populate with old data.
+            if (string.IsNullOrEmpty(user.Username))
+                user.Username = beforeUpdateUserData.Username;
+            if(string.IsNullOrEmpty(user.Firstname))
+                user.Firstname = beforeUpdateUserData.Firstname;
+            if(string.IsNullOrEmpty(user.Lastname))
+                user.Lastname = beforeUpdateUserData.Lastname;
+            if(string.IsNullOrEmpty(user.Email))
+                user.Email = beforeUpdateUserData.Email;
+            if (string.IsNullOrEmpty(user.Password))
+                user.Password = beforeUpdateUserData.Password;
             else
-                newAuth_UserModel.Password = Hash.HashPassword(newAuth_UserModel.Password);
+                user.Password = Hash.HashPassword(user.Password);
 
-            // beforeUpdateUserData[0] == UserID
-            authQuery.EditUser(newAuth_UserModel, int.Parse(beforeUpdateUserData[0]));
-            return newAuth_UserModel;
+            // Database interaction
+            authQuery.EditUser(user);
+            // Return the user
+            return user;
         }
 
         // Check if password match the password in database.
-        public bool PasswordMatch(string username, string password)
+        public int PasswordMatch(string username, string password)
         {
-            if (authQuery.GetPassword(username) == password)
-                return true;
-            else
-                return false;
+            return authQuery.CheckIfPasswordIsCorrect(username, password);
         }
 
     }

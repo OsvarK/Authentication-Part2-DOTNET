@@ -212,5 +212,9 @@ C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Back
 C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\System.Security.Cryptography.ProtectedData.dll
 C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\System.Xml.XPath.XmlDocument.dll
 C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\Google.Apis.dll
+C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\Google.Apis.Auth.PlatformServices.dll
+C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\Google.Apis.Auth.dll
+C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\bin\Debug\netcoreapp3.1\Google.Apis.Core.dll
 C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\obj\Debug\netcoreapp3.1\AuthenticationAPI.csproj.CoreCompileInputs.cache
 C:\Users\oscar\Desktop\Development\My Projects\Authentication [React, .NET]\Backend\AuthBackend\AuthenticationAPI\AuthenticationAPI\obj\Debug\netcoreapp3.1\AuthenticationAPI.MvcApplicationPartsAssemblyInfo.cache

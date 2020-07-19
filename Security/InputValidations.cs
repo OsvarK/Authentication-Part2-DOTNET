@@ -11,22 +11,45 @@ namespace AuthenticationAPI.Security
     {
         // This class is for filtering and is supposed to be easy to modify
 
-        public Tuple<bool, string> Auth_UserModelValidationSignup(Auth_UserModel user)
+
+        public Tuple<bool, string> Auth_UserModelValidationSignupEdit(Auth_EditProfileModel editUser)
         {
-            if(!IsValidEmail(user.Email))
+            Tuple<bool, string> status = Tuple.Create(true, "Ok");
+            if (isNotEmpty(editUser.Firstname))
+                if (!AtleastOneSymbol(editUser.Firstname) || editUser.Firstname.Any(char.IsDigit))
+                    return Tuple.Create(false, "Your name should not contain any symbols or numbers");
+            if (isNotEmpty(editUser.Lastname))
+                if (!AtleastOneSymbol(editUser.Lastname) || editUser.Lastname.Any(char.IsDigit))
+                    return Tuple.Create(false, "Your name should not contain any symbols or numbers");
+            if (isNotEmpty(editUser.Username))
+                status = UsernameInputChecker(editUser.Username);
+            if(isNotEmpty(editUser.Email))
+                if (!IsValidEmail(editUser.Email))
+                    return Tuple.Create(false, "Email is not a valid email.");
+            if(isNotEmpty(editUser.Password))
+                status = PasswordInputChecker(editUser.Password);
+            return status;
+        }
+
+        public Tuple<bool, string> Auth_UserModelValidationSignup(Auth_RegisterModel newUser)
+        {
+            if(!IsValidEmail(newUser.Email))
                 return Tuple.Create(false, "Email is not a valid email.");
 
             string[] stringsToValidate = 
             {
-                user.Firstname,
-                user.Lastname,
-                user.Username,
-                user.Email,
-                user.Password
+                newUser.Firstname,
+                newUser.Lastname,
+                newUser.Username,
+                newUser.Email,
+                newUser.Password
             };
             Tuple<bool, string> doneGeneralValidation = GeneralInputChecker(stringsToValidate);
-            Tuple<bool, string> donePasswordValidation = PasswordInputChecker(user.Password);
-            Tuple<bool, string> doneUsernameValidation = UsernameInputChecker(user.Username);
+            Tuple<bool, string> donePasswordValidation = PasswordInputChecker(newUser.Password);
+            Tuple<bool, string> doneUsernameValidation = UsernameInputChecker(newUser.Username);
+
+            if(!AtleastOneSymbol(newUser.Firstname) || !AtleastOneSymbol(newUser.Lastname) || newUser.Firstname.Any(char.IsDigit) || newUser.Lastname.Any(char.IsDigit))
+                return Tuple.Create(false, "Your name should not contain any symbols or numbers");
             if (!doneGeneralValidation.Item1)
                 return doneGeneralValidation;
             if (!donePasswordValidation.Item1)
@@ -37,12 +60,12 @@ namespace AuthenticationAPI.Security
         }
         
 
-        public Tuple<bool, string> Auth_UserModelValidationLogin(Auth_UserModel user)
+        public Tuple<bool, string> Auth_UserModelValidationLogin(Auth_LoginModel loginUser)
         {
             string[] stringsToValidate =
             {
-                user.Username,
-                user.Password
+                loginUser.Username,
+                loginUser.Password
             };
             Tuple<bool, string> doneGeneralValidation = GeneralInputChecker(stringsToValidate);
             if (!doneGeneralValidation.Item1)
@@ -55,12 +78,19 @@ namespace AuthenticationAPI.Security
         {
             foreach (string data in input)
             {
-                if(data == null)
-                    return Tuple.Create(false, "Input field must not be empty.");
-                if (string.IsNullOrWhiteSpace(data))
+                if (!isNotEmpty(data))
                     return Tuple.Create(false, "White spaces or empty fields are not allowed.");
             }
             return Tuple.Create(true, string.Empty);
+        }
+
+        bool isNotEmpty(string s)
+        {
+            if (s == null)
+                return false;
+            if (string.IsNullOrWhiteSpace(s))
+                return false;
+            return true;
         }
 
         Tuple<bool, string> PasswordInputChecker(string input)
