@@ -269,6 +269,23 @@ namespace CrudBackend.Data.Queries
            return user;
        }
 
+        public void DeleteAccount(int userID)
+        {
+            string queryString = "DELETE FROM Users WHERE UserID=@UserID";
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
+
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = connection;
+            cmd.CommandText = queryString;
+
+            connection.Open();
+
+            cmd.Parameters.Add(new MySqlParameter("@UserID", userID));
+
+            cmd.ExecuteScalar();
+            connection.Close();
+        }
+
         // SQL creates spaces to fill all the varachars, remove them.
         string RemoveSpacesInString(string str)
         {

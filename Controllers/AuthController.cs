@@ -178,7 +178,7 @@ namespace AuthenticationAPI.Controllers
             return Ok(returnUser);
         }
 
-        // GET: api/auth/authgoogle ----------------------------------------------------------------------
+        // POST: api/auth/authgoogle ----------------------------------------------------------------------
         // Require auth token, return user data.
         [HttpPost("authgoogle")]
         public IActionResult authgoogle([FromBody] string googleTokenID)
@@ -204,7 +204,7 @@ namespace AuthenticationAPI.Controllers
             }   
         }
 
-        // POST: api/auth/logout ----------------------------------------------------------------------
+        // GET: api/auth/logout ----------------------------------------------------------------------
         // Require auth token, terminate auth token.
         [HttpGet("logout")]
         public IActionResult logout()
@@ -278,6 +278,23 @@ namespace AuthenticationAPI.Controllers
                 return Ok(isAccountExternal.Item2);
             else
                 return Ok("None");
+        }
+
+        // GET: api/auth/deleteaccount ----------------------------------------------------------------------
+        // Require auth token, terminate the account.
+        [HttpGet("deleteaccount")]
+        public IActionResult DeleteAccount()
+        {
+            Console.WriteLine("api/auth/deleteaccount");
+
+            // Check for Authentication claims
+            int userID = Authenticate();
+            if (userID == -1)
+                return StatusCode(405, "Authorization token is not valid.");
+
+            Response.Cookies.Delete("token");
+            authAction.DeleteAccount(userID);
+            return Ok("Authorization was terminated.");
         }
     }
 }

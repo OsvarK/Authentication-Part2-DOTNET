@@ -118,5 +118,10 @@ namespace AuthenticationAPI.Logic
         {
             return authQuery.IsAccountLinkedToAlternativeAuth(userID);
         }
+
+        public void DeleteAccount(int userID)
+        {
+            authQuery.DeleteAccount(userID);
+        }
     }
 }
