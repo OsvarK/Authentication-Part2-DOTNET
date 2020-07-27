@@ -9,6 +9,7 @@ The goal of this project is to learn the .NET framework, but also get some under
 | POST | /api/auth/login | Creates a token in the browsers to login the user | False, (but requires login credentials) |
 | POST | /api/auth/signup | Creates a new user | False |
 | POST | /api/auth/edituser | Edits the logged in users information | True |
+| POST | /api/auth/changepassword | Edits the logged in users password | True |
 | POST | /api/auth/authgoogle | Logins or creates an account using google (requires google's TokenID) | False |
 | GET | /api/auth/auth | Returns the users information | True |
 | GET | /api/auth/logout | Terminates the token in the browsers to logout the user | True |
