@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 
 namespace AuthenticationAPI.Models
 {
-    public class Auth_LoginModel
+    public class Auth_LoginUserModel
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string emailOrUsername { get; set; }
+        public string password { get; set; }
     }
+
+
 }

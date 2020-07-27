@@ -28,8 +28,7 @@ namespace AuthenticationAPI.Security
             // Claims
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
-                new Claim(JwtRegisteredClaimNames.CHash, user.Username),
+                new Claim(JwtRegisteredClaimNames.Sub, user.userID.ToString()),
             };
 
             // Create Token
@@ -91,8 +90,8 @@ namespace AuthenticationAPI.Security
         }
 
         // Authorization
-        // returns claims. if return null user is not authorized.
-        public static List<string> Authorization(string token)
+        // returns the usersID else return -1 if NOT authenticated.
+        public static int Authorization(string token)
         {
             // Check if Cookie exist and read token
             List<string> tokenClaims;
@@ -100,11 +99,26 @@ namespace AuthenticationAPI.Security
             {
                 tokenClaims = ReadToken(token);
             }
-            catch
+            catch (Exception)
             {
                 tokenClaims = null;
             }
-            return tokenClaims;
+
+            if (tokenClaims != null)
+            {
+                try
+                {                  
+                    int userID = int.Parse(tokenClaims[0]);
+                    return userID; // All done. 
+                }
+                catch (Exception)
+                {
+                    return -1;                   
+                }
+            } else
+            {
+                return -1;
+            }
         }
     }
 }

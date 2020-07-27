@@ -13,56 +13,55 @@ namespace AuthenticationAPI.Logic
         // Instantiate the database query class
         Auth_Querys authQuery = new Auth_Querys();
 
-        public bool CheckIfUserIsAdmin(string username)
+        public bool CheckIfUserIsAdmin(int userID)
         {
-            return authQuery.CheckIsUserisAdmin(username);
+            return authQuery.CheckIsUserisAdmin(userID);
         }
 
-        public int CreateNewUser(Auth_RegisterModel newUser)
+        public int CreateNewUserUsingRegisterModel(Auth_RegisterUserModel newUser)
         {
-            Auth_UserModel user = new Auth_UserModel();
-            user.RegisterModelToSqlModel(newUser);
-            // Database interaction
+            Auth_UserModel user = UserModelConverter.RegisterUserModel_To_UserModel(newUser);
             return authQuery.CreateNewUser(user);
         }
 
-        public Auth_UserModel GetUsersData(List<string> claims)
+        public Auth_UserModel GetUsersData(int userID)
         {
-            // Database interaction
-            // Claims[0] = UserID, claims[1] = username
-            return authQuery.GetUsersData(claims[0], claims[1]);
+            return authQuery.GetUsersData(userID);
         }
 
-        public bool DoesUserExist(string username, string email)
+        public bool DoesEmailExist(string email)
         {
-            // Database interaction
-            return authQuery.DoesUserExist(username, email);
+            return authQuery.DoesEmailExist(email);
         }
 
-        public Auth_UserModel EditUser(Auth_EditProfileModel editUser, List<string> claims){
+        public bool DoesUsernameExist(string username)
+        {
+            return authQuery.DoesUsernameExist(username);
+        }
 
-            Auth_UserModel beforeUpdateUserData = authQuery.GetUsersData(claims[0], claims[1]);
-            Auth_UserModel user = new Auth_UserModel();
-            user.EditModelToSqlModel(editUser);
+        public Auth_UserModel EditUser(Auth_EditUserModel editUser, int userID){
+
+            Auth_UserModel beforeUpdateUserData = authQuery.GetUsersData(userID);
+            Auth_UserModel user = UserModelConverter.EditUserModel_To_UserModel(editUser);
 
             // this fields are not allwed to be changed here.   
-            user.UserID = beforeUpdateUserData.UserID;
-            user.GoogleSubjectID = beforeUpdateUserData.GoogleSubjectID;
-            user.IsAdmin = beforeUpdateUserData.IsAdmin;
+            user.userID = beforeUpdateUserData.userID;
+            user.googleSubjectID = beforeUpdateUserData.googleSubjectID;
+            user.isAdmin = beforeUpdateUserData.isAdmin;
 
             // if they fields are empty, populate with old data.
-            if (string.IsNullOrEmpty(user.Username))
-                user.Username = beforeUpdateUserData.Username;
-            if(string.IsNullOrEmpty(user.Firstname))
-                user.Firstname = beforeUpdateUserData.Firstname;
-            if(string.IsNullOrEmpty(user.Lastname))
-                user.Lastname = beforeUpdateUserData.Lastname;
-            if(string.IsNullOrEmpty(user.Email))
-                user.Email = beforeUpdateUserData.Email;
-            if (string.IsNullOrEmpty(user.Password))
-                user.Password = beforeUpdateUserData.Password;
+            if (string.IsNullOrEmpty(user.username))
+                user.username = beforeUpdateUserData.username;
+            if (string.IsNullOrEmpty(user.firstname))
+                user.firstname = beforeUpdateUserData.firstname;
+            if(string.IsNullOrEmpty(user.lastname))
+                user.lastname = beforeUpdateUserData.lastname;
+            if (string.IsNullOrEmpty(user.email))
+                user.email = beforeUpdateUserData.email;
+            if (string.IsNullOrEmpty(user.password))
+                user.password = beforeUpdateUserData.password;
             else
-                user.Password = Hash.HashPassword(user.Password);
+                user.password = Hash.HashPassword(user.password);
 
             // Database interaction
             authQuery.EditUser(user);
@@ -71,10 +70,53 @@ namespace AuthenticationAPI.Logic
         }
 
         // Check if password match the password in database.
-        public int PasswordMatch(string username, string password)
+        public int PasswordMatch(string emailOrUsername, string password)
         {
-            return authQuery.CheckIfPasswordIsCorrect(username, password);
+            return authQuery.CheckIfPasswordIsCorrect(emailOrUsername, password);
         }
 
+        public Auth_UserModel LoginUsingGoogle(Auth_UserModel user)
+        {
+            // Check if user already have an account that is linked to google.
+            Auth_UserModel fetchedUser = authQuery.GetUserFromGoogleID(user.googleSubjectID);
+
+            if (fetchedUser.googleSubjectID == null)
+            {
+                // No account found, create account.
+                user.username = user.googleSubjectID + "@Google"; //<- a normal user cannot create a account using @ symbol. so we dont need to check if username already exist.
+                authQuery.CreateNewUser(user); 
+                user = authQuery.GetUserFromGoogleID(user.googleSubjectID);
+
+            } else
+            {
+                // Account found
+                user.userID = fetchedUser.userID;
+                user.username = fetchedUser.username;
+                user = fetchedUser;
+            }
+            return user;
+        }
+
+        public Tuple<bool, string> ChangePassword(int userID, Auth_ChangeUserPasswordModel changeUserPasswordModel)
+        {
+            if (!IsAccountLinkedToAlternativeAuth(userID).Item1)
+            {
+                try
+                {
+                    authQuery.ChangePassword(userID, changeUserPasswordModel.newPassword);
+                    return Tuple.Create(true, String.Empty);
+                }
+                catch
+                {
+                    return Tuple.Create(false, "Error sending password to database");
+                }
+            }
+            return Tuple.Create(false, "Cannot change password on a linked acount.");
+        }
+
+        public Tuple<bool, string> IsAccountLinkedToAlternativeAuth(int userID)
+        {
+            return authQuery.IsAccountLinkedToAlternativeAuth(userID);
+        }
     }
 }

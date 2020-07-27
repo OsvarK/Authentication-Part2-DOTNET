@@ -9,8 +9,10 @@ The goal of this project is to learn the .NET framework, but also get some under
 | POST | /api/auth/login | Creates a token in the browsers to login the user | False, (but requires login credentials) |
 | POST | /api/auth/signup | Creates a new user | False |
 | POST | /api/auth/edituser | Edits the logged in users information | True |
+| POST | /api/auth/authgoogle | Logins or creates an account using google (requires google's TokenID) | False |
 | GET | /api/auth/auth | Returns the users information | True |
 | GET | /api/auth/logout | Terminates the token in the browsers to logout the user | True |
+| GET | /api/auth/isadmin | Return the users admin status | True |
 | GET | /api/auth/isadmin | Return the users admin status | True |
 
 
@@ -20,10 +22,10 @@ The goal of this project is to learn the .NET framework, but also get some under
 
 ### Database Table Example 
 
-| UserID | Username | Firstname | Lastname | Email | Password | Admin |
+| UserID | Username | Firstname | Lastname | Email | Password | GoogleSubjectID | Admin |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 0 | John69 | John | Doe | John.Doe69@Email.com | Dl2jJFVqNTUoJFkrdiFFZey2dsO5yOtd6ytVSyd3L3/Nz7hh | 0 |
-| 1 | OscarAdmin123 | Oscar | Karlsson | Oscar.karlsson@Email.com | Dl2jJFVqN3UoJhkrdiFxZey2ds45yztd6xtVSyd3L3/Nd5hh | 1 |
+| 0 | John69 | John | Doe | John.Doe69@Email.com | Dl2jJFVqNTUoJFkrdiFFZey2dsO5yOtd6ytVSyd3L3/Nz7hh | NULL | 0 |
+| 1 | OscarAdmin123 | Oscar | Karlsson | Oscar.karlsson@Email.com | Dl2jJFVqN3UoJhkrdiFxZey2ds45yztd6xtVSyd3L3/Nd5hh | NULL | 1 |
 
 ### Is the password safe
 
