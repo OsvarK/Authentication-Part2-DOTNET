@@ -24,7 +24,7 @@ The goal of this project is to learn the .NET framework, but also get some under
 ### Database Table Example 
 
 | UserID | Username | Firstname | Lastname | Email | Password | GoogleSubjectID | Admin |
-| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
 | 0 | John69 | John | Doe | John.Doe69@Email.com | Dl2jJFVqNTUoJFkrdiFFZey2dsO5yOtd6ytVSyd3L3/Nz7hh | NULL | 0 |
 | 1 | OscarAdmin123 | Oscar | Karlsson | Oscar.karlsson@Email.com | Dl2jJFVqN3UoJhkrdiFxZey2ds45yztd6xtVSyd3L3/Nd5hh | NULL | 1 |
 
