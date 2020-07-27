@@ -14,7 +14,6 @@ The goal of this project is to learn the .NET framework, but also get some under
 | GET | /api/auth/auth | Returns the users information | True |
 | GET | /api/auth/logout | Terminates the token in the browsers to logout the user | True |
 | GET | /api/auth/isadmin | Return the users admin status | True |
-| GET | /api/auth/isadmin | Return the users admin status | True |
 
 
 ### Tech
