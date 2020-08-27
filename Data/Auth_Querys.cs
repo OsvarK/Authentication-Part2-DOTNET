@@ -131,7 +131,7 @@ namespace CrudBackend.Data.Queries
             }        
             connection.Close();
 
-            if (value == null)
+            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrEmpty(value))
                 return Tuple.Create(false, "None");
             else
                 return Tuple.Create(true, value);
@@ -280,6 +280,24 @@ namespace CrudBackend.Data.Queries
 
             connection.Open();
 
+            cmd.Parameters.Add(new MySqlParameter("@UserID", userID));
+
+            cmd.ExecuteScalar();
+            connection.Close();
+        }
+
+        public void UploadProfileImageUrlToDB(string url, int userID)
+        {
+            string queryString = "UPDATE Users SET ProfileImgUrl=@ProfileImgUrl WHERE UserID=@UserID";
+            MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
+
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = connection;
+            cmd.CommandText = queryString;
+
+            connection.Open();
+
+            cmd.Parameters.Add(new MySqlParameter("@ProfileImgUrl", url));
             cmd.Parameters.Add(new MySqlParameter("@UserID", userID));
 
             cmd.ExecuteScalar();

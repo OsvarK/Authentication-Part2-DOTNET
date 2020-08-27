@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -41,7 +42,8 @@ namespace AuthenticationAPI
                 app.UseDeveloperExceptionPage();
             } else
             {
-                app.UseExceptionHandler("/error");
+                //app.UseExceptionHandler("/error");
+                app.UseHsts();
             }
 
             app.UseHttpsRedirection();
@@ -51,10 +53,17 @@ namespace AuthenticationAPI
             app.UseCors("AuthCorsPolicy"); // use AuthCorsPolicy
 
             app.UseAuthorization();
+
+            app.UseStaticFiles();
             
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.Run(async (context) =>
+            {
+                await context.Response.WriteAsync("404, Route does not exist.");
             });
         }
     }

@@ -14,16 +14,28 @@
         public string linkedAccountProvider { get; set; }
         public bool linkedAccountStatus { get; set; }
         public bool isAdmin { get; set; }
+        public string ProfileImageUrl { get; set; }
 
-        public void DefineLinkedAccountStatus()
+        public void validate(string httpHost)
+        {
+            DefineLinkedAccountStatus();
+            SetProfilePicture(httpHost);
+        }
+
+        private void DefineLinkedAccountStatus()
         {
             // is account google linked
             if (!string.IsNullOrEmpty(googleSubjectID))
             {
                 linkedAccountProvider = "Google";
                 linkedAccountStatus = true;
-                return;
             }
+        }
+
+        private void SetProfilePicture(string httpHost)
+        {
+            if (string.IsNullOrEmpty(ProfileImageUrl) || string.IsNullOrWhiteSpace(ProfileImageUrl))
+                ProfileImageUrl = "https://" + httpHost + "/images/blankProfile.png"; ;
         }
     }
 }

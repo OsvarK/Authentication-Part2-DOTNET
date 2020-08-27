@@ -1,13 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 
 using AuthenticationAPI.Security;
 using AuthenticationAPI.Models;
 using AuthenticationAPI.Logic;
+
 using Google.Apis.Auth;
+using System.IO;
+using System.Linq;
+using Microsoft.AspNetCore.Http.Extensions;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace AuthenticationAPI.Controllers
 {
@@ -19,34 +26,39 @@ namespace AuthenticationAPI.Controllers
     public class AuthController : Controller
     {
         // Instantiate 
-        InputValidations inputValidations = new InputValidations();
-        Auth_Actions authAction = new Auth_Actions();
-
-        // Disable the ability to create an account.
-        private bool _DisableSignup;
-
-        public AuthController()
+        private IWebHostEnvironment _env;
+        private InputValidations _inputValidations = new InputValidations();
+        private Auth_Actions _authAction = new Auth_Actions();
+        
+        // Global Variables
+        private bool _DisableSignup; 
+        
+        // On class creation
+        public AuthController(IWebHostEnvironment environment)
         {
-            // check if we allow users to be able to signup. refers to appsetings.json 
-            _DisableSignup = ConfigContex.UserRegisteringDsabled();
+            _env = environment;
+            _DisableSignup = ConfigContex.UserRegisteringDsabled(); // <- check if we allow users to be able to signup. refers to appsetings.json 
         }
+
+        // Functions --------------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------------------------
 
         int Authenticate()
         {
             // Get Token from Cookies
             string key = "token";
-            var value = Request.Cookies[key];
-            // return the UserID if authorized else return -1
+            string value = Request.Cookies[key];
+            // return the userID if authorized else return -1         
             return AuthToken.Authorization(value);
         }
 
         // return false if it fail
-        bool UpdateToken(Auth_UserModel user)
+        bool UpdateToken(int userId)
         {
             try
             {
                 Response.Cookies.Delete("token");
-                string token = AuthToken.GenerateAuthToken(user);
+                string token = AuthToken.GenerateAuthToken(userId);
                 string key = "token";
                 string value = token;
                 CookieOptions cookieOptions = new CookieOptions();
@@ -65,7 +77,8 @@ namespace AuthenticationAPI.Controllers
         // ------------------------------------------------------------------------------------------------
 
         // POST: api/auth/createuser ----------------------------------------------------------------------
-        // Require user data, creates user.
+        // Requires: None-Authentication
+        // Description: Registers a new user, then Authenticates it.
         [HttpPost("signup")]
         public IActionResult CreateNewUser([FromBody] Auth_RegisterUserModel newUser)
         {
@@ -76,85 +89,84 @@ namespace AuthenticationAPI.Controllers
                 return StatusCode(405, "Creating accounts have been disabled.");
 
             // Validate user inputed data
-            Tuple<bool, string> validation = inputValidations.Auth_RegisterUserModelValidation(newUser);
+            Tuple<bool, string> validation = _inputValidations.Auth_RegisterUserModelValidation(newUser);
             if (!validation.Item1)
                 return StatusCode(405, validation.Item2);
 
             newUser.password = Hash.HashPassword(newUser.password);
 
             // Check if user already exist
-            if (authAction.DoesEmailExist(newUser.email))
+            if (_authAction.DoesEmailExist(newUser.email))
                 return StatusCode(405, "Email already exist.");
-            if (authAction.DoesUsernameExist(newUser.username))
+            if (_authAction.DoesUsernameExist(newUser.username))
                 return StatusCode(405, "Username already exist.");
 
             // Create new user, return user id, update token.
-            int userID = authAction.CreateNewUserUsingRegisterModel(newUser);         
-            if (UpdateToken(authAction.GetUsersData(userID)))
+            int userID = _authAction.CreateNewUserUsingRegisterModel(newUser); // <- to determien path to blank profile picture. (proberly is a better way, but for now im going with this)
+            if (UpdateToken(userID))
                 return Ok("Successfully created your account!");
             else
                 return StatusCode(500, "something went wrong");
         }
 
-        // POST: api/auth/edituser
-        // Require user data, changes user data
+        // POST: api/auth/edituser ----------------------------------------------------------------------
+        // Requires: Authentication
+        // Description: Edit the information of the authenticated user.
         [HttpPost("edituser")]
         public IActionResult EditUser([FromBody] Auth_EditUserModel editUser)
         {
             Console.WriteLine("api/auth/edituser");
-            
-            // Check for Authentication claims
+
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
             // Check if user already exist
-            if (authAction.DoesEmailExist(editUser.email))
+            if (_authAction.DoesEmailExist(editUser.email))
                 return StatusCode(405, "Email already exist.");
-            if (authAction.DoesUsernameExist(editUser.username))
+            if (_authAction.DoesUsernameExist(editUser.username))
                 return StatusCode(405, "Username already exist.");
 
             // Validate user inputed data
-            Tuple<bool, string> validation = inputValidations.Auth_EditUserModelValidation(editUser);
+            Tuple<bool, string> validation = _inputValidations.Auth_EditUserModelValidation(editUser);
             if (!validation.Item1)
                 return StatusCode(405, validation.Item2);
-
-            // updates and returns the new user information.     
-            Auth_UserModel user = authAction.EditUser(editUser, userID);
-            if (UpdateToken(user))
+            else if (UpdateToken(userID))
                 return Ok("Successfully edited your account!");
             else
                 return StatusCode(500, "something went wrong");
         }
-
-        // POST: api/auth/changepassword
-        // changes user password
+         
+        // POST: api/auth/changepassword ----------------------------------------------------------------------
+        // Requires: Authentication
+        // Description: Change the password of the authenticated user.
         [HttpPost("changepassword")]
         public IActionResult ChangePassword([FromBody] Auth_ChangeUserPasswordModel changeUserPassword)
         {
             Console.WriteLine("api/auth/changepassword");
 
-            // Check for Authentication claims
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
             // Check if account is a external linked account.
-            Tuple<bool, string> isAccountExternal = authAction.IsAccountLinkedToAlternativeAuth(userID);
+            Tuple<bool, string> isAccountExternal = _authAction.IsAccountLinkedToAlternativeAuth(userID);
             if (isAccountExternal.Item1)
                 return StatusCode(405, "Your account was created using " + isAccountExternal.Item2 + ", visit them to change your password");
 
             // Validate user inputed data
-           Tuple<bool, string> validation = inputValidations.Auth_ChangePasswordModelValidation(changeUserPassword);
+           Tuple<bool, string> validation = _inputValidations.Auth_ChangePasswordModelValidation(changeUserPassword);
            if (!validation.Item1)
                return StatusCode(405, validation.Item2);
 
             // validate the validation password.
-            if (authAction.PasswordMatch(authAction.GetUsersData(userID).username, changeUserPassword.currentPassword) == -1)
+            changeUserPassword.currentPassword = Hash.HashPassword(changeUserPassword.currentPassword);
+            changeUserPassword.newPassword = Hash.HashPassword(changeUserPassword.newPassword);
+            if (_authAction.PasswordMatch(_authAction.GetUsersData(userID).username, changeUserPassword.currentPassword) == -1)
                 return StatusCode(405, "Validation failed, password incorrect.");
 
             // return
-            Tuple<bool, string> returnedStatus = authAction.ChangePassword(userID, changeUserPassword);
+            Tuple<bool, string> returnedStatus = _authAction.ChangePassword(userID, changeUserPassword);
             if (returnedStatus.Item1)
                 return Ok("Successfully changed password");
             else
@@ -162,24 +174,26 @@ namespace AuthenticationAPI.Controllers
         }
 
         // GET: api/auth/auth ----------------------------------------------------------------------
-        // Require auth token, return user data.
+        // Requires: None-Authentication
+        // Description: Determien if user is authenticated.
         [HttpGet("auth")]
         public IActionResult Auth()
         {
             Console.WriteLine("api/auth/auth");
 
-            // Check for Authentication claims.
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
-            Auth_ReturnUserModel returnUser = UserModelConverter.UserModel_To_ReturnUserModel(authAction.GetUsersData(userID));
-            returnUser.DefineLinkedAccountStatus();
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
+
+            Auth_ReturnUserModel returnUser = UserModelConverter.UserModel_To_ReturnUserModel(_authAction.GetUsersData(userID));
+            returnUser.validate(Request.Host.ToString());
             // return users data.
             return Ok(returnUser);
         }
 
         // POST: api/auth/authgoogle ----------------------------------------------------------------------
-        // Require auth token, return user data.
+        // Requires: None-Authentication
+        // Description: Login/Regiser an account from external source (Google).
         [HttpPost("authgoogle")]
         public IActionResult authgoogle([FromBody] string googleTokenID)
         {
@@ -192,8 +206,9 @@ namespace AuthenticationAPI.Controllers
                 user.firstname = payload.GivenName;
                 user.lastname = payload.FamilyName;
                 user.googleSubjectID = payload.Subject;
-                user = authAction.LoginUsingGoogle(user);
-                if (UpdateToken(user))
+                user = _authAction.LoginUsingGoogle(user);
+            
+                if (UpdateToken(user.userID))
                     return Ok("Successfully logged in to your account!");
                 else
                     return StatusCode(500, "something went wrong");
@@ -201,46 +216,48 @@ namespace AuthenticationAPI.Controllers
             catch (Exception)
             {
                 return StatusCode(405, "Something went wrong");
-            }   
+            }  
+            return Ok(googleTokenID);
         }
 
         // GET: api/auth/logout ----------------------------------------------------------------------
-        // Require auth token, terminate auth token.
+        // Requires: Authentication
+        // Description: Terminate the authentication cookie (Logout).
         [HttpGet("logout")]
         public IActionResult logout()
         {
             Console.WriteLine("api/auth/logout");
 
-            // Check for Authentication claims
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
             Response.Cookies.Delete("token");
             return Ok("Authorization was terminated.");
         }
 
         // POST: api/auth/login ----------------------------------------------------------------------
-        // Require username and password, return token.
+        // Requires: None-Authentication
+        // Description: Login an user accoirding to the inputs, then authneticate the user.
         [HttpPost("login")]
         public IActionResult Login([FromBody] Auth_LoginUserModel loginUser)
         {
             Console.WriteLine("api/auth/login");
           
             // Validate user inputed data
-            Tuple<bool, string> validation = inputValidations.Auth_LoginUserModelValidation(loginUser);
+            Tuple<bool, string> validation = _inputValidations.Auth_LoginUserModelValidation(loginUser);
             if (!validation.Item1)
                 return StatusCode(405, validation.Item2);
 
             loginUser.password = Hash.HashPassword(loginUser.password);
 
-            int userId = authAction.PasswordMatch(loginUser.emailOrUsername, loginUser.password);
+            int userID = _authAction.PasswordMatch(loginUser.emailOrUsername, loginUser.password);
 
-            if (userId == -1)
+            if (userID == -1)
                 return StatusCode(405, "Incorrect password.");
             else
             {
-                if (UpdateToken(authAction.GetUsersData(userId)))
+                if (UpdateToken(_authAction.GetUsersData(userID).userID))
                     return Ok("Successfully logged in to your account!");
                 else
                     return StatusCode(500, "something went wrong");
@@ -248,31 +265,31 @@ namespace AuthenticationAPI.Controllers
         }
 
         // GET: api/auth/isadmin ----------------------------------------------------------------------
-        // Returns if user is admin
+        // Requires: Authentication
+        // Description: Retrives information admin status from the authenticated account
         [HttpGet("isadmin")]
         public IActionResult admin()
         {
             Console.WriteLine("api/auth/isadmin");
-            // Check for Authentication claims
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
-            return Ok("You admin status is: " + authAction.CheckIfUserIsAdmin(userID));
+            return Ok("You admin status is: " + _authAction.CheckIfUserIsAdmin(userID));
         }
 
         // GET: api/auth/isaccountlinked ----------------------------------------------------------------------
-        // Returns if user is admin
+        // Requires: Authentication
+        // Description: Retrives information linked status from the authenticated account
         [HttpGet("isaccountlinked")]
         public IActionResult IsAccountLinked()
         {
             Console.WriteLine("api/auth/isaccountlinked");
-            // Check for Authentication claims
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
-            Tuple<bool, string> isAccountExternal = authAction.IsAccountLinkedToAlternativeAuth(userID);
+            Tuple<bool, string> isAccountExternal = _authAction.IsAccountLinkedToAlternativeAuth(userID);
 
             if (isAccountExternal.Item1)
                 return Ok(isAccountExternal.Item2);
@@ -281,20 +298,39 @@ namespace AuthenticationAPI.Controllers
         }
 
         // GET: api/auth/deleteaccount ----------------------------------------------------------------------
-        // Require auth token, terminate the account.
+        // Requires: Authentication
+        // Description: Deletes the authenticated users account.
         [HttpGet("deleteaccount")]
         public IActionResult DeleteAccount()
         {
             Console.WriteLine("api/auth/deleteaccount");
 
-            // Check for Authentication claims
+            // Authenticate
             int userID = Authenticate();
-            if (userID == -1)
-                return StatusCode(405, "Authorization token is not valid.");
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
             Response.Cookies.Delete("token");
-            authAction.DeleteAccount(userID);
+            _authAction.DeleteAccount(userID);
             return Ok("Authorization was terminated.");
+        }
+
+
+        // POST: api/auth/upload/profileimage ----------------------------------------------------------------------
+        // Requires: Authentication
+        // Description: Upload the authenticated users profile picture.
+        [HttpPost("upload/profileimage")]
+        public async Task<IActionResult> UploadAvatar(IFormFile imagefile)
+        {
+            Console.WriteLine("api/auth/upload/profileimage");
+            // Authenticate
+            // int userID = Authenticate();
+            // if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
+
+            var result = await _authAction.UploadUserProfilePictureAsync(_env, imagefile, 0);
+            if (result.Item1 == true)
+                return Ok(result.Item2);
+            else
+                return StatusCode(404, result.Item2);
         }
     }
 }

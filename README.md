@@ -11,22 +11,25 @@ The goal of this project is to learn the .NET framework, but also get some under
 | POST | /api/auth/edituser | Edits the logged in users information | True |
 | POST | /api/auth/changepassword | Edits the logged in users password | True |
 | POST | /api/auth/authgoogle | Logins or creates an account using google (requires google's TokenID) | False |
+| POST | /api/auth/upload/profileimage | Uploads users profile picture | True |
 | GET | /api/auth/auth | Returns the users information | True |
 | GET | /api/auth/logout | Terminates the token in the browsers to logout the user | True |
 | GET | /api/auth/isadmin | Return the users admin status | True |
 | GET | /api/auth/deleteaccount | Deletes users account | True |
 
 
-### Tech
+### Higelights
 * [MySQL] - MySQL for the database
 * [JWT] - For the token authentication
+* [Dropbox Api] - For storeing images
+* [Google Api] - For authenticating with google
 
 ### Database Table Example 
 
-| UserID | Username | Firstname | Lastname | Email | Password | GoogleSubjectID | Admin |
+| UserID | Username | Firstname | Lastname | Email | Password | GoogleSubjectID | Admin | ProfileImageUrl |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 0 | John69 | John | Doe | John.Doe69@Email.com | Dl2jJFVqNTUoJFkrdiFFZey2dsO5yOtd6ytVSyd3L3/Nz7hh | NULL | 0 |
-| 1 | OscarAdmin123 | Oscar | Karlsson | Oscar.karlsson@Email.com | Dl2jJFVqN3UoJhkrdiFxZey2ds45yztd6xtVSyd3L3/Nd5hh | NULL | 1 |
+| 0 | John69 | John | Doe | John.Doe69@Email.com | Dl2jJFVqNTUoJFkrdiFFZey2dsO5yOtd6ytVSyd3L3/Nz7hh | NULL | 0 | null |
+| 1 | OscarAdmin123 | Oscar | Karlsson | Oscar.karlsson@Email.com | Dl2jJFVqN3UoJhkrdiFxZey2ds45yztd6xtVSyd3L3/Nd5hh | NULL | 1 | (dropbox shared link) |
 
 ### Is the password safe
 

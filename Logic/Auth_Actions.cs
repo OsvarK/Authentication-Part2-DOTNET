@@ -1,17 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Threading.Tasks;
 using AuthenticationAPI.Models;
 using AuthenticationAPI.Security;
 using CrudBackend.Data.Queries;
-
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace AuthenticationAPI.Logic
 {
     public class Auth_Actions
     {
-
         // Instantiate the database query class
         Auth_Querys authQuery = new Auth_Querys();
+
+
+        // -------------------------------------------------------------------------------------
+        // Functions 
 
         public bool CheckIfUserIsAdmin(int userID)
         {
@@ -122,6 +129,55 @@ namespace AuthenticationAPI.Logic
         public void DeleteAccount(int userID)
         {
             authQuery.DeleteAccount(userID);
+        }
+
+        public async Task<Tuple<bool, string>> UploadUserProfilePictureAsync(IWebHostEnvironment env, IFormFile imagefile, int userId)
+        {
+            if (imagefile == null || imagefile.Length < 0 || imagefile.Length > ConfigContex.GetProfileImageMaxSizeInBytes())
+                return Tuple.Create(false, "File is to large or none existing");
+
+
+            // Start image upload
+            string imagePath = @"\Images\";
+            string uploadPath = env.WebRootPath + imagePath;
+
+            // Create Directory
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            // Create file uniq name
+            var fileName = ImageProcessing.GenerateUniqFileNameFromOldName(imagefile.FileName);
+            imagePath = imagePath + @"\";
+            var filePath = @".." + Path.Combine(imagePath, fileName);
+            string fullPath = uploadPath + fileName;
+
+            
+            try
+            {
+                // Upload file to local storage (wwwroot)
+                using (var img = Image.FromStream(imagefile.OpenReadStream()))
+                {
+                    // Copy image, resize it, make new image                      
+                    int newSize = ConfigContex.GetProfileImagePixelSize(); // Get size from appsettings
+                    Bitmap resultImage = ImageProcessing.Resize(img, newSize, newSize);
+                    resultImage.Save(uploadPath + fileName);
+                }
+
+                // Upload file to dropbox, then get shared link
+                string sharedUrl = await DropboxApi.Upload(fullPath, fileName, true);
+                // Upload url to database
+                //authQuery.UploadProfileImageUrlToDB(sharedUrl, userId);
+                // Delete local stored image
+                File.Delete(fullPath);
+                // Succes
+                return Tuple.Create(true, "Profile image successfully created.");
+            }
+            catch
+            {
+                return Tuple.Create(false, "Error in uploading file, check if its the correct extenstion (PNG, JPG).");
+            }          
         }
     }
 }

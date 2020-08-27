@@ -16,7 +16,7 @@ namespace AuthenticationAPI.Security
 {
     public static class AuthToken
     {
-        public static string GenerateAuthToken(Auth_UserModel user)
+        public static string GenerateAuthToken(int userId)
         {
 
             string jwtKey = ConfigContex.GetJwtKey();
@@ -28,7 +28,7 @@ namespace AuthenticationAPI.Security
             // Claims
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.userID.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             };
 
             // Create Token
