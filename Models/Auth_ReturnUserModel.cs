@@ -14,7 +14,7 @@
         public string linkedAccountProvider { get; set; }
         public bool linkedAccountStatus { get; set; }
         public bool isAdmin { get; set; }
-        public string ProfileImageUrl { get; set; }
+        public string profileImageUrl { get; set; }
 
         public void validate(string httpHost)
         {
@@ -34,8 +34,8 @@
 
         private void SetProfilePicture(string httpHost)
         {
-            if (string.IsNullOrEmpty(ProfileImageUrl) || string.IsNullOrWhiteSpace(ProfileImageUrl))
-                ProfileImageUrl = "https://" + httpHost + "/images/blankProfile.png"; ;
+            if (string.IsNullOrEmpty(profileImageUrl) || string.IsNullOrWhiteSpace(profileImageUrl))
+                profileImageUrl = "https://" + httpHost + "/images/blankProfile.png"; ;
         }
     }
 }

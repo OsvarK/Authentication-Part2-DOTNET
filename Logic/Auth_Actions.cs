@@ -128,14 +128,29 @@ namespace AuthenticationAPI.Logic
 
         public void DeleteAccount(int userID)
         {
+            DeleteProfilePictureFromCloud(GetUsersData(userID).profileImageUrl);
             authQuery.DeleteAccount(userID);
         }
 
-        public async Task<Tuple<bool, string>> UploadUserProfilePictureAsync(IWebHostEnvironment env, IFormFile imagefile, int userId)
+        public async void DeleteProfilePictureFromCloud(string url)
+        {
+            if (string.IsNullOrEmpty(url) || string.IsNullOrWhiteSpace(url))
+                return;
+            await DropboxApi.DeleteFromDropbox(url);
+        }
+
+        public void AddProfilePictureByUrl(string url, int userID)
+        {
+            authQuery.UploadProfileImageUrlToDB(url, userID);
+        }
+
+        public async Task<Tuple<bool, string>> UploadUserProfilePictureAsync(IWebHostEnvironment env, IFormFile imagefile, int userID)
         {
             if (imagefile == null || imagefile.Length < 0 || imagefile.Length > ConfigContex.GetProfileImageMaxSizeInBytes())
                 return Tuple.Create(false, "File is to large or none existing");
 
+            //store old image url, if it exist
+            string oldImageUrl = GetUsersData(userID).profileImageUrl;
 
             // Start image upload
             string imagePath = @"\Images\";
@@ -152,8 +167,7 @@ namespace AuthenticationAPI.Logic
             imagePath = imagePath + @"\";
             var filePath = @".." + Path.Combine(imagePath, fileName);
             string fullPath = uploadPath + fileName;
-
-            
+         
             try
             {
                 // Upload file to local storage (wwwroot)
@@ -168,10 +182,11 @@ namespace AuthenticationAPI.Logic
                 // Upload file to dropbox, then get shared link
                 string sharedUrl = await DropboxApi.Upload(fullPath, fileName, true);
                 // Upload url to database
-                //authQuery.UploadProfileImageUrlToDB(sharedUrl, userId);
+                AddProfilePictureByUrl(sharedUrl, userID);
                 // Delete local stored image
                 File.Delete(fullPath);
                 // Succes
+                DeleteProfilePictureFromCloud(oldImageUrl);
                 return Tuple.Create(true, "Profile image successfully created.");
             }
             catch

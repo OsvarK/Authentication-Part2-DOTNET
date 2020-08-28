@@ -13,6 +13,7 @@ namespace AuthenticationAPI.Models
         public string password { get; set; }
         public string googleSubjectID { get; set; }
         public bool isAdmin { get; set; }
+        public string profileImageUrl { get; set; }
 
 
         //CREATE TABLE `Users` (

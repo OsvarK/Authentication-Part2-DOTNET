@@ -31,7 +31,7 @@ namespace AuthenticationAPI.Logic
             auth_ReturnUserModel.email = auth_UserModel.email;
             auth_ReturnUserModel.googleSubjectID = auth_UserModel.googleSubjectID;
             auth_ReturnUserModel.isAdmin = auth_UserModel.isAdmin;
-
+            auth_ReturnUserModel.profileImageUrl = auth_UserModel.profileImageUrl;
             return auth_ReturnUserModel;
         }
 

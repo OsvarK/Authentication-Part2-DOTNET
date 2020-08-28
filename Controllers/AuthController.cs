@@ -207,7 +207,7 @@ namespace AuthenticationAPI.Controllers
                 user.lastname = payload.FamilyName;
                 user.googleSubjectID = payload.Subject;
                 user = _authAction.LoginUsingGoogle(user);
-            
+                _authAction.AddProfilePictureByUrl(payload.Picture, user.userID);
                 if (UpdateToken(user.userID))
                     return Ok("Successfully logged in to your account!");
                 else
@@ -217,7 +217,6 @@ namespace AuthenticationAPI.Controllers
             {
                 return StatusCode(405, "Something went wrong");
             }  
-            return Ok(googleTokenID);
         }
 
         // GET: api/auth/logout ----------------------------------------------------------------------
@@ -323,14 +322,20 @@ namespace AuthenticationAPI.Controllers
         {
             Console.WriteLine("api/auth/upload/profileimage");
             // Authenticate
-            // int userID = Authenticate();
-            // if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
+            int userID = Authenticate();
+            if (userID == -1) { return StatusCode(405, "Authorization token is not valid."); }
 
-            var result = await _authAction.UploadUserProfilePictureAsync(_env, imagefile, 0);
+            var result = await _authAction.UploadUserProfilePictureAsync(_env, imagefile, userID);
             if (result.Item1 == true)
                 return Ok(result.Item2);
             else
                 return StatusCode(404, result.Item2);
+        }
+
+        [HttpGet("debug")]
+        public void debug()
+        {
+            
         }
     }
 }

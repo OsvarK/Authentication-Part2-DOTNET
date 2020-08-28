@@ -2,10 +2,12 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using AuthenticationAPI.Security;
 using Dropbox.Api;
+using Dropbox.Api.FileRequests;
 using Dropbox.Api.Files;
 using Dropbox.Api.Sharing;
 
@@ -49,6 +51,31 @@ namespace AuthenticationAPI.Logic
             {
                 return null;
             }
+        }
+
+        public static async Task DeleteFromDropbox(string dropboxSharedLink)
+        {
+            try
+            {
+                
+                string[] pathRoutes = dropboxSharedLink.Split("/");
+                dropboxSharedLink = pathRoutes[pathRoutes.Length - 1];
+                dropboxSharedLink = dropboxSharedLink.Remove(dropboxSharedLink.Length - 6);
+
+                if (pathRoutes[2] != "www.dropbox.com")
+                    return;
+
+                using var dbx = new DropboxClient(ConfigContex.GetDropboxApiKey());
+
+                DeleteArg deleteArg = new DeleteArg("/" + dropboxSharedLink);
+                await dbx.Files.DeleteV2Async(deleteArg);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
         }
     }
 }

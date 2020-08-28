@@ -61,6 +61,7 @@ namespace CrudBackend.Data.Queries
                     user.password = RemoveSpacesInString(reader[5].ToString());
                     user.googleSubjectID = RemoveSpacesInString(reader[6].ToString());
                     user.isAdmin = Convert.ToBoolean(Convert.ToInt16(RemoveSpacesInString(reader[7].ToString())));
+                    user.profileImageUrl = RemoveSpacesInString(reader[8].ToString());
                 }
             }
             connection.Close();
@@ -263,6 +264,7 @@ namespace CrudBackend.Data.Queries
                     user.password = RemoveSpacesInString(reader[5].ToString());
                     user.googleSubjectID = RemoveSpacesInString(reader[6].ToString());
                     user.isAdmin = Convert.ToBoolean(Convert.ToInt16(RemoveSpacesInString(reader[7].ToString())));
+                    user.profileImageUrl = RemoveSpacesInString(reader[8].ToString());
                 }
            }
            connection.Close();
@@ -288,7 +290,7 @@ namespace CrudBackend.Data.Queries
 
         public void UploadProfileImageUrlToDB(string url, int userID)
         {
-            string queryString = "UPDATE Users SET ProfileImgUrl=@ProfileImgUrl WHERE UserID=@UserID";
+            string queryString = "UPDATE Users SET ProfileImageUrl=@ProfileImageUrl WHERE UserID=@UserID";
             MySqlConnection connection = new MySqlConnection(ConfigContex.GetConnectionString());
 
             MySqlCommand cmd = new MySqlCommand();
@@ -297,7 +299,7 @@ namespace CrudBackend.Data.Queries
 
             connection.Open();
 
-            cmd.Parameters.Add(new MySqlParameter("@ProfileImgUrl", url));
+            cmd.Parameters.Add(new MySqlParameter("@ProfileImageUrl", url));
             cmd.Parameters.Add(new MySqlParameter("@UserID", userID));
 
             cmd.ExecuteScalar();
