@@ -60,3 +60,7 @@ To determien if two passwords are the same password we just tests if the both ha
 I don’t like when data is beeing passed from the controller directly to the queries, and there for i have a class between them there i can process the data before it goes into queries (if needed). As business logic i guess.
 ## Why not stores procedures?
 i'm not comfortable workign with them yet, becouse i havent done enough reading.
+## Linux required dependency
+```
+sudo apt-get install -y libgdiplus
+```

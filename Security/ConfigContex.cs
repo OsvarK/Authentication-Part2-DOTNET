@@ -52,6 +52,11 @@ namespace AuthenticationAPI.Security
 
         // Settings
 
+        public static string GetDefaultProfilePictureUrl()
+        {
+            return GetConfiguration().GetValue<string>("Settings:GetDefaultProfilePictureUrl");
+        }
+
         public static bool UserRegisteringDsabled()
         {
             return GetConfiguration().GetValue<bool>("Settings:DisableUserSignup");

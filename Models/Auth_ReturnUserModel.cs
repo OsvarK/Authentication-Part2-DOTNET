@@ -1,4 +1,6 @@
-﻿namespace AuthenticationAPI.Models
+﻿using AuthenticationAPI.Security;
+
+namespace AuthenticationAPI.Models
 {
     public class Auth_ReturnUserModel
     {
@@ -35,7 +37,7 @@
         private void SetProfilePicture(string httpHost)
         {
             if (string.IsNullOrEmpty(profileImageUrl) || string.IsNullOrWhiteSpace(profileImageUrl))
-                profileImageUrl = "https://" + httpHost + "/images/blankProfile.png"; ;
+                profileImageUrl = ConfigContex.GetDefaultProfilePictureUrl();
         }
     }
 }

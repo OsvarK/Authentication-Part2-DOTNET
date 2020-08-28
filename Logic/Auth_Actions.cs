@@ -151,32 +151,29 @@ namespace AuthenticationAPI.Logic
 
             //store old image url, if it exist
             string oldImageUrl = GetUsersData(userID).profileImageUrl;
-
+            
             // Start image upload
-            string imagePath = @"\Images\";
-            string uploadPath = env.WebRootPath + imagePath;
 
             // Create Directory
-            if (!Directory.Exists(uploadPath))
+            if (!Directory.Exists(env.WebRootPath))
             {
-                Directory.CreateDirectory(uploadPath);
+                Console.WriteLine("wwwRoot does not exist");
             }
 
             // Create file uniq name
             var fileName = ImageProcessing.GenerateUniqFileNameFromOldName(imagefile.FileName);
-            imagePath = imagePath + @"\";
-            var filePath = @".." + Path.Combine(imagePath, fileName);
-            string fullPath = uploadPath + fileName;
-         
+            string wwrootPath = env.WebRootPath;
+            wwrootPath = wwrootPath + @"\";
+            string fullPath = wwrootPath + fileName;
             try
             {
                 // Upload file to local storage (wwwroot)
-                using (var img = Image.FromStream(imagefile.OpenReadStream()))
+                using (var fileStream = Image.FromStream(imagefile.OpenReadStream()))
                 {
                     // Copy image, resize it, make new image                      
                     int newSize = ConfigContex.GetProfileImagePixelSize(); // Get size from appsettings
-                    Bitmap resultImage = ImageProcessing.Resize(img, newSize, newSize);
-                    resultImage.Save(uploadPath + fileName);
+                    Bitmap resultImage = ImageProcessing.Resize(fileStream, newSize, newSize);
+                    resultImage.Save(fullPath);
                 }
 
                 // Upload file to dropbox, then get shared link
@@ -189,8 +186,9 @@ namespace AuthenticationAPI.Logic
                 DeleteProfilePictureFromCloud(oldImageUrl);
                 return Tuple.Create(true, "Profile image successfully created.");
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return Tuple.Create(false, "Error in uploading file, check if its the correct extenstion (PNG, JPG).");
             }          
         }
