@@ -131,7 +131,10 @@ namespace AuthenticationAPI.Controllers
             Tuple<bool, string> validation = _inputValidations.Auth_EditUserModelValidation(editUser);
             if (!validation.Item1)
                 return StatusCode(405, validation.Item2);
-            else if (UpdateToken(userID))
+
+            _authAction.EditUser(editUser, userID);
+
+            if (UpdateToken(userID))
                 return Ok("Successfully edited your account!");
             else
                 return StatusCode(500, "something went wrong");
@@ -206,8 +209,11 @@ namespace AuthenticationAPI.Controllers
                 user.firstname = payload.GivenName;
                 user.lastname = payload.FamilyName;
                 user.googleSubjectID = payload.Subject;
+                user.profileImageUrl = payload.Picture;
+
+                // login or create account
                 user = _authAction.LoginUsingGoogle(user);
-                _authAction.AddProfilePictureByUrl(payload.Picture, user.userID);
+                
                 if (UpdateToken(user.userID))
                     return Ok("Successfully logged in to your account!");
                 else

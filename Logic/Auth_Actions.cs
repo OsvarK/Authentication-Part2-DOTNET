@@ -91,8 +91,10 @@ namespace AuthenticationAPI.Logic
             {
                 // No account found, create account.
                 user.username = user.googleSubjectID + "@Google"; //<- a normal user cannot create a account using @ symbol. so we dont need to check if username already exist.
-                authQuery.CreateNewUser(user); 
+                authQuery.CreateNewUser(user);
+                string pictureUrl = user.profileImageUrl;
                 user = authQuery.GetUserFromGoogleID(user.googleSubjectID);
+                AddProfilePictureByUrl(pictureUrl, user.userID);
 
             } else
             {
@@ -163,7 +165,7 @@ namespace AuthenticationAPI.Logic
             // Create file uniq name
             var fileName = ImageProcessing.GenerateUniqFileNameFromOldName(imagefile.FileName);
             string wwrootPath = env.WebRootPath;
-            wwrootPath = wwrootPath + @"\";
+            wwrootPath = wwrootPath + "/";
             string fullPath = wwrootPath + fileName;
             try
             {
