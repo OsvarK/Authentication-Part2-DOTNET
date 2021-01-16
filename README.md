@@ -3,6 +3,9 @@ This is the backend part, View the React frontend part [here!](https://github.co
 # Introduction 
 The goal of this project is to learn the .NET framework, but also get some understanding on how i can handle authentication using tokens. I'm using React as a frontend framework because im quite familiar with it. Because of my first time creating something like this, there is probely some mistakes or bad practises that i'm unaware off and should therefore never be used as a real application.  
 
+# Live version
+https://karlssonoscar.com/
+
 # API Calls
 | Method | Routes | Description | Requires token |
 | ------ | ------ | ------ | ------ |
@@ -16,9 +19,6 @@ The goal of this project is to learn the .NET framework, but also get some under
 | GET | /api/auth/logout | Terminates the token in the browsers to logout the user | True |
 | GET | /api/auth/isadmin | Return the users admin status | True |
 | GET | /api/auth/deleteaccount | Deletes users account | True |
-
-# Live version
-https://karlssonoscar.com/
 
 ### Higelights
 * [MySQL] - MySQL for the database
