@@ -1,7 +1,7 @@
 # Authentication using React & .NET
 This is the backend part, View the React frontend part [here!](https://github.com/OsvarK/AuthProject-Part1-React)
 # Introduction 
-The goal of this project is to learn the .NET framework, but also get some understanding on how i can handle authentication using tokens. I'm using React as a frontend framework because im quite familiar with it. Because of my first time creating something like this, there is probely some mistakes or bad practises that i'm unaware off and should therefore never be used as a real application.  
+The goal of this project is to learn the .NET framework, but also get some understanding on how i can handle authentication using tokens. I'm using React as a frontend framework because im quite familiar with it. Because of my first time creating something like this, there is proberly some mistakes or bad practises that i'm unaware off and should therefore never be used as a real application.  
 
 # Live version
 https://karlssonoscar.com/
