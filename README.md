@@ -17,6 +17,8 @@ The goal of this project is to learn the .NET framework, but also get some under
 | GET | /api/auth/isadmin | Return the users admin status | True |
 | GET | /api/auth/deleteaccount | Deletes users account | True |
 
+# Live version
+https://karlssonoscar.com/
 
 ### Higelights
 * [MySQL] - MySQL for the database
